@@ -12,11 +12,11 @@
     :root{
       --panel-w: 760px;
       --panel-pad: 28px;
-      --bg1: #fcefee; /* pastel palette */
+      --bg1: #fcefee;
       --bg2: #e6f7f3;
       --bg3: #fff7e6;
       --panel-bg: #fff;
-      --accent: #111; /* ink color for 8-bit border */
+      --accent: #111;
       --btn-bg: #fff8dc;
       --btn-shadow: #000;
       --card-radius: 8px;
@@ -387,7 +387,6 @@
      * 1) FIREBASE SETUP
      **********************************************/
 
-    // OFFICIAL CDN modular imports (Firebase docs example) 
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js';
     import {
       getDatabase,
@@ -399,29 +398,16 @@
       serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js';
 
-    // 🔴 IMPORTANT: paste your real config here
-
-      const firebaseConfig = {
-        apiKey: "AIzaSyDdVaafVtIpi4u7W70xMBFQB085cGBW4v4",
-        authDomain: "quantimangeresti.firebaseapp.com",
-        databaseURL: "https://quantimangeresti-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "quantimangeresti",
-        storageBucket: "quantimangeresti.firebasestorage.app",
-        messagingSenderId: "204484577614",
-        appId: "1:204484577614:web:e8c69e59d9cf518af7361f"
-      };
-
-    // Small safety check: warn if placeholders are still there
-    function configLooksValid(cfg) {
-      if (!cfg) return false;
-      const values = Object.values(cfg);
-      if (!values.length) return false;
-      return values.every(v => typeof v === 'string' && !v.includes('PASTE_YOUR'));
-    }
-
-    if (!configLooksValid(firebaseConfig)) {
-      alert("Devi incollare la vera config di Firebase (con databaseURL) nel codice.");
-    }
+    // 🔴 REPLACE THIS with your real Firebase config (including databaseURL)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDdVaafVtIpi4u7W70xMBFQB085cGBW4v4",
+      authDomain: "quantimangeresti.firebaseapp.com",
+      databaseURL: "https://quantimangeresti-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "quantimangeresti",
+      storageBucket: "quantimangeresti.firebasestorage.app",
+      messagingSenderId: "204484577614",
+      appId: "1:204484577614:web:e8c69e59d9cf518af7361f"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db  = getDatabase(app);
@@ -519,17 +505,20 @@
     }
 
     /**********************************************
-     * 5) LOBBY: CREATE / JOIN  (with error alerts)
+     * 5) ROOM LISTENER & UI
      **********************************************/
 
     function attachRoomListener() {
       if (!roomRef) return;
+
       onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
         latestRoomSnapshot = data;
         if (!data) return;
+
         isHost = (data.hostId === playerId);
         hostBadgeWrapper.style.display = isHost ? 'inline-flex' : 'none';
+
         updatePhaseUI(data);
         renderPlayersList(data);
         renderResults(data);
@@ -538,6 +527,134 @@
         alert("Errore nel collegarsi alla stanza Firebase (vedi console).");
       });
     }
+
+    function updatePhaseUI(room) {
+      const state = room.state || 'lobby';
+
+      if (state === 'lobby') {
+        phaseLabel.textContent = "Lobby – in attesa di iniziare.";
+        foodBox.textContent = "Quando l'host è pronto, inizierà il primo giro.";
+        answerInput.disabled = true;
+        answerBtn.disabled = true;
+        resultsBox.style.display = 'none';
+        answerStatus.textContent = "";
+      } else if (state === 'question') {
+        const cf = room.currentFood || "???";
+        phaseLabel.textContent = `Giro ${room.currentRound || 1} – Quanti ne mangeresti?`;
+        foodBox.textContent = cf;
+        resultsBox.style.display = 'none';
+
+        const myAnswered = room.answers && room.answers[playerId];
+        if (myAnswered) {
+          answerInput.disabled = true;
+          answerBtn.disabled = true;
+          answerStatus.textContent = "Hai già risposto per questo giro.";
+        } else {
+          answerInput.disabled = false;
+          answerBtn.disabled = false;
+          answerStatus.textContent = "";
+          answerInput.value = "";
+        }
+      } else if (state === 'results') {
+        const cf = room.currentFood || "???";
+        phaseLabel.textContent = `Risultati – giro ${room.currentRound || 1}`;
+        foodBox.textContent = cf;
+        answerInput.disabled = true;
+        answerBtn.disabled = true;
+      }
+
+      // Host controls visibility + state
+      hostControls.style.display = isHost ? 'flex' : 'none';
+
+      if (!isHost) {
+        newFoodBtn.disabled = true;
+        revealBtn.disabled = true;
+        resetRoomBtn.disabled = true;
+      } else {
+        if (room.state === 'question') {
+          newFoodBtn.disabled = false;
+          revealBtn.disabled = false;
+        } else if (room.state === 'lobby') {
+          newFoodBtn.disabled = false;
+          revealBtn.disabled = true;
+        } else if (room.state === 'results') {
+          newFoodBtn.disabled = false;
+          revealBtn.disabled = true;
+        }
+        resetRoomBtn.disabled = false;
+      }
+    }
+
+    function renderPlayersList(room) {
+      const players = room.players || {};
+      const answers = room.answers || {};
+      const lastResult = room.lastResult || null;
+
+      const playerIds = Object.keys(players);
+      if (!playerIds.length) {
+        playersList.innerHTML = '<div class="tiny">Nessun giocatore ancora.</div>';
+        return;
+      }
+
+      const html = playerIds.map(pid => {
+        const p = players[pid];
+        const answered = !!answers[pid];
+        const score = p.score || 0;
+        const isFurthest = lastResult && lastResult.furthestId === pid;
+
+        const statusText = answered ? 'OK' : '…';
+        const statusClass = answered ? 'status-answered' : 'status-pending';
+
+        return `
+          <div class="player-row">
+            <div>
+              <strong>${escapeHtml(p.name || '???')}</strong>
+              ${isFurthest ? ' <span class="tiny result-highlight">(beve!)</span>' : ''}
+            </div>
+            <div class="player-score">
+              <span class="${statusClass}">${statusText}</span>
+              &nbsp;•&nbsp; sorsi: ${score}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      playersList.innerHTML = `
+        <div class="tiny" style="margin-bottom:4px;">Giocatori nella stanza:</div>
+        ${html}
+      `;
+    }
+
+    function renderResults(room) {
+      const state = room.state || 'lobby';
+      const lastResult = room.lastResult;
+      if (state !== 'results' || !lastResult) {
+        resultsBox.style.display = 'none';
+        resultsBox.innerHTML = '';
+        return;
+      }
+
+      const avg = lastResult.average;
+      const furthestName = lastResult.furthestName || 'Qualcuno';
+      const furthestValue = lastResult.furthestValue;
+      const count = lastResult.answersCount || 0;
+
+      resultsBox.style.display = 'block';
+      resultsBox.innerHTML = `
+        <h2>RISULTATO</h2>
+        <p>Avete detto in media <strong>${avg.toFixed(2)}</strong>.</p>
+        <p>
+          <span class="result-highlight">${escapeHtml(furthestName)}</span>
+          è statə il più lontano dalla media (ha detto <strong>${furthestValue}</strong>).
+        </p>
+        <p class="tiny">Risposte considerate: ${count}.</p>
+        <p class="tiny">L'host può lanciare il prossimo cibo con "Nuovo cibo casuale".</p>
+      `;
+    }
+
+    /**********************************************
+     * 6) LOBBY: CREATE / JOIN
+     **********************************************/
 
     createRoomBtn.addEventListener('click', async () => {
       console.log("createRoomBtn clicked");
@@ -636,21 +753,176 @@
     }
 
     /**********************************************
-     * 6) RESTO DELLA LOGICA (uguale alla versione che ti ho dato)
-     *    - updatePhaseUI
-     *    - renderPlayersList
-     *    - renderResults
-     *    - answerBtn handler
-     *    - host controls (newFoodBtn, revealBtn, resetRoomBtn)
-     *    - inizializzazione viewLobby()
+     * 7) ANSWERS
      **********************************************/
 
-    // ⬇️ QUI copia/incolla il resto del codice che avevi già
-    // (updatePhaseUI, renderPlayersList, renderResults, risposte, host controls…)
-    // senza modifiche, oppure riusa direttamente il file completo aggiornato che posso riscriverti se preferisci.
+    answerBtn.addEventListener('click', async () => {
+      if (!roomRef || !latestRoomSnapshot) return;
+
+      const room = latestRoomSnapshot;
+      if (room.state !== 'question') {
+        alert('Non siamo nella fase di risposta.');
+        return;
+      }
+
+      const raw = answerInput.value.trim();
+      if (raw === '') {
+        alert('Inserisci un numero (0 va bene).');
+        return;
+      }
+      const num = Number(raw);
+      if (!Number.isFinite(num)) {
+        alert('Il valore inserito non è un numero valido.');
+        return;
+      }
+
+      try {
+        const ansRef = ref(db, `rooms/${roomCode}/answers/${playerId}`);
+        await set(ansRef, {
+          name: playerName,
+          value: num
+        });
+
+        answerInput.disabled = true;
+        answerBtn.disabled = true;
+        answerStatus.textContent = "Risposta inviata! Aspetta i risultati…";
+      } catch (err) {
+        console.error("Errore salvataggio risposta:", err);
+        alert("Errore salvando la risposta: " + (err.message || err));
+      }
+    });
+
+    /**********************************************
+     * 8) HOST CONTROLS: NEW FOOD / REVEAL / RESET
+     **********************************************/
+
+    newFoodBtn.addEventListener('click', async () => {
+      if (!isHost || !roomRef) return;
+
+      try {
+        const food = randomFood();
+        const snap = await get(roomRef);
+        if (!snap.exists()) return;
+        const room = snap.val();
+        const nextRound = (room.currentRound || 0) + 1;
+
+        await update(roomRef, {
+          state: 'question',
+          currentFood: food,
+          currentRound: nextRound,
+          lastResult: null,
+          answers: null
+        });
+      } catch (err) {
+        console.error("Errore Nuovo cibo:", err);
+        alert("Errore lanciando il nuovo cibo: " + (err.message || err));
+      }
+    });
+
+    revealBtn.addEventListener('click', async () => {
+      if (!isHost || !roomRef) return;
+
+      try {
+        const snap = await get(roomRef);
+        if (!snap.exists()) return;
+        const room = snap.val();
+
+        if (room.state !== 'question') {
+          alert('Puoi mostrare i risultati solo durante un giro di risposta.');
+          return;
+        }
+
+        const players = room.players || {};
+        const answers = room.answers || {};
+
+        const entries = Object.keys(answers).map(pid => {
+          const a = answers[pid];
+          return {
+            playerId: pid,
+            name: a.name || (players[pid] && players[pid].name) || '???',
+            value: Number(a.value)
+          };
+        }).filter(e => Number.isFinite(e.value));
+
+        if (!entries.length) {
+          alert('Nessuna risposta ancora.');
+          return;
+        }
+
+        const sum = entries.reduce((acc,e) => acc + e.value, 0);
+        const avg = sum / entries.length;
+
+        let furthest = entries[0];
+        let maxDiff = Math.abs(entries[0].value - avg);
+        for (let i = 1; i < entries.length; i++){
+          const diff = Math.abs(entries[i].value - avg);
+          if (diff > maxDiff) {
+            maxDiff = diff;
+            furthest = entries[i];
+          }
+        }
+
+        const lastResult = {
+          average: avg,
+          furthestId: furthest.playerId,
+          furthestName: furthest.name,
+          furthestValue: furthest.value,
+          answersCount: entries.length
+        };
+
+        await update(roomRef, {
+          state: 'results',
+          lastResult
+        });
+
+        const playerPath = `rooms/${roomCode}/players/${furthest.playerId}`;
+        const furthestPlayerSnap = await get(ref(db, playerPath));
+        if (furthestPlayerSnap.exists()) {
+          const pData = furthestPlayerSnap.val();
+          const newScore = (pData.score || 0) + 1;
+          await update(ref(db, playerPath), { score: newScore });
+        }
+      } catch (err) {
+        console.error("Errore Reveal:", err);
+        alert("Errore mostrando i risultati: " + (err.message || err));
+      }
+    });
+
+    resetRoomBtn.addEventListener('click', async () => {
+      if (!isHost || !roomRef) return;
+      const ok = confirm('Resetti la stanza? Azzererà i giri e i risultati, ma terrà i giocatori.');
+      if (!ok) return;
+
+      try {
+        const snap = await get(roomRef);
+        if (!snap.exists()) return;
+        const room = snap.val();
+        const players = room.players || {};
+
+        const updates = {
+          state: 'lobby',
+          currentFood: null,
+          currentRound: 0,
+          lastResult: null,
+          answers: null
+        };
+
+        Object.keys(players).forEach(pid => {
+          updates[`players/${pid}/score`] = 0;
+        });
+
+        await update(roomRef, updates);
+      } catch (err) {
+        console.error("Errore Reset stanza:", err);
+        alert("Errore resettando la stanza: " + (err.message || err));
+      }
+    });
+
+    /**********************************************
+     * 9) INITIAL STATE
+     **********************************************/
 
     showViewLobby();
   </script>
-
 </body>
 </html>
