@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quanti ne mangeresti? – Party</title>
+
+  <!-- Pixel / 8-bit font -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --panel-w: 760px;
+      --panel-pad: 28px;
+      --bg1: #fcefee; /* pastel palette */
+      --bg2: #e6f7f3;
+      --bg3: #fff7e6;
+      --panel-bg: #fff;
+      --accent: #111; /* ink color for 8-bit border */
+      --btn-bg: #fff8dc;
+      --btn-shadow: #000;
+      --card-radius: 8px;
+      --good: #2e8b57;
+      --bad: #c0392b;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .stage{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 28px;
+    }
+
+    .panel{
+      width: min(var(--panel-w), 95vw);
+      background: var(--panel-bg);
+      padding: var(--panel-pad);
+      box-sizing: border-box;
+      position: relative;
+      border: 8px solid var(--accent);
+      border-radius: 6px;
+      box-shadow:
+        6px 6px 0 0 var(--accent),
+        12px 12px 0 0 rgba(0,0,0,0.06);
+      background-image: linear-gradient(transparent 0%, rgba(0,0,0,0.015) 100%);
+    }
+
+    .panel-inner{
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    h1{
+      font-family: 'Press Start 2P', monospace;
+      font-size: 20px;
+      margin: 4px 0 10px 0;
+      line-height:1.1;
+      letter-spacing: 0.6px;
+      color: var(--accent);
+      text-align:center;
+    }
+
+    p.lead{
+      margin:0 0 18px 0;
+      color:#333;
+      font-size: 14px;
+      text-align:center;
+    }
+
+    .divider{
+      width:160px;
+      height:10px;
+      margin: 12px auto 20px;
+      background-image: linear-gradient(90deg,
+        var(--accent) 0 10px,
+        transparent 10px 20px);
+      background-size: 20px 10px;
+      opacity:0.9;
+    }
+
+    #foodBox{
+      margin: 10px auto;
+      min-height: 64px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 18px;
+      color: var(--accent);
+      padding: 14px 18px;
+      border: 4px solid var(--accent);
+      border-radius: 6px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.95));
+      max-width: 640px;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.06);
+      word-break: break-word;
+      text-align:center;
+    }
+
+    .controls{
+      margin-top: 16px;
+      display:flex;
+      gap: 12px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    .btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      padding: 10px 16px;
+      border: 4px solid var(--accent);
+      background: linear-gradient(180deg, var(--btn-bg), #fff);
+      cursor: pointer;
+      border-radius: 6px;
+      box-shadow: 6px 6px 0 0 var(--btn-shadow);
+      transition: transform 0.06s linear, box-shadow 0.06s linear, opacity 0.1s;
+      user-select: none;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .btn:active{
+      transform: translate(4px,4px);
+      box-shadow: 2px 2px 0 0 var(--btn-shadow);
+    }
+
+    .btn[disabled]{
+      opacity:0.5;
+      cursor: default;
+      transform:none;
+      box-shadow: 6px 6px 0 0 var(--btn-shadow);
+    }
+
+    input[type="number"],
+    input[type="text"]{
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      padding: 10px 12px;
+      border: 4px solid var(--accent);
+      border-radius: 6px;
+      text-align:center;
+      background: #fff;
+      box-shadow: 4px 4px 0 0 rgba(0,0,0,0.08);
+    }
+
+    input[type="number"]{
+      width: 120px;
+    }
+
+    input[type="text"]{
+      width: 220px;
+    }
+
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+      font-size:11px;
+    }
+
+    .topbar span{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .badge{
+      display:inline-block;
+      font-family:'Press Start 2P', monospace;
+      font-size:9px;
+      padding:4px 6px;
+      border:3px solid var(--accent);
+      border-radius:4px;
+      background:#fff8dc;
+      box-shadow:3px 3px 0 0 var(--accent);
+      text-transform:uppercase;
+    }
+
+    .badge-host{
+      background:#d1f5e0;
+    }
+
+    #playersList{
+      margin-top:14px;
+      padding:10px;
+      border:2px dashed rgba(0,0,0,0.18);
+      border-radius:6px;
+      font-size:11px;
+      max-height:150px;
+      overflow:auto;
+    }
+
+    #playersList strong{
+      font-family:'Press Start 2P', monospace;
+      font-size:10px;
+    }
+
+    .player-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:4px 0;
+      border-bottom:1px dotted rgba(0,0,0,0.06);
+    }
+
+    .player-row:last-child{
+      border-bottom:none;
+    }
+
+    .player-score{
+      font-size:10px;
+    }
+
+    .player-status{
+      font-size:10px;
+    }
+
+    .status-answered{
+      color:var(--good);
+    }
+
+    .status-pending{
+      color:#999;
+    }
+
+    #resultsBox{
+      margin-top:16px;
+      padding:12px 14px;
+      border-radius:6px;
+      border:3px solid var(--accent);
+      background: #fffdf2;
+      font-size:12px;
+    }
+
+    #resultsBox h2{
+      font-family:'Press Start 2P', monospace;
+      font-size:12px;
+      margin:0 0 8px;
+    }
+
+    .result-highlight{
+      font-weight:600;
+      color:var(--bad);
+    }
+
+    .tiny{
+      font-size:10px;
+      color:#666;
+    }
+
+    .view{
+      display:none;
+    }
+
+    .view.active{
+      display:block;
+    }
+
+    .lobby-card{
+      text-align:center;
+    }
+
+    .lobby-form{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+      margin-top:8px;
+    }
+
+    .room-code-display{
+      font-family:'Press Start 2P', monospace;
+      font-size:16px;
+      letter-spacing:4px;
+      margin-top:4px;
+    }
+
+    .hint{
+      font-size:11px;
+      color:#555;
+      text-align:center;
+      margin-top:6px;
+    }
+
+    @media (max-width:480px){
+      h1{ font-size:14px; }
+      #foodBox{ font-size:12px; min-height:54px; padding:10px; }
+      .btn{ padding:8px 10px; font-size:9px; }
+      input[type="number"], input[type="text"]{ width:100%; font-size:9px; }
+      .topbar{ flex-direction:column; align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="panel" role="main" aria-labelledby="main-title">
+      <div class="panel-inner">
+        <h1 id="main-title">Quanti ne mangeresti? – Party</h1>
+        <div class="divider" aria-hidden="true"></div>
+
+        <!-- LOBBY VIEW -->
+        <div id="view-lobby" class="view active">
+          <p class="lead">
+            Gioco alcolico multiplayer 🥤<br>
+            1) Scegli un nickname<br>
+            2) Crea una stanza o entra con un codice<br>
+            3) Chi è più lontano dalla media… beve!
+          </p>
+
+          <div class="lobby-card">
+            <div class="lobby-form">
+              <input id="nicknameInput" type="text" maxlength="16" placeholder="Il tuo nickname">
+              <input id="roomCodeInput" type="text" maxlength="6" placeholder="Codice stanza (es. PIZZA)">
+              <div class="controls">
+                <button id="createRoomBtn" class="btn">Crea stanza</button>
+                <button id="joinRoomBtn" class="btn">Entra</button>
+              </div>
+            </div>
+            <p class="hint tiny">
+              Suggerimento: il creatore della stanza è l'host.<br>
+              L'host lancia i cibi e rivela i risultati.
+            </p>
+          </div>
+        </div>
+
+        <!-- GAME VIEW -->
+        <div id="view-game" class="view">
+          <div class="topbar">
+            <span>
+              <span class="badge">Tu</span>
+              <span id="topbarName"></span>
+            </span>
+            <span>
+              <span class="badge">Stanza</span>
+              <span id="topbarRoom"></span>
+            </span>
+            <span id="hostBadgeWrapper">
+              <span class="badge badge-host">Host</span>
+            </span>
+          </div>
+
+          <p class="lead" id="phaseLabel"></p>
+
+          <div id="foodBox" aria-live="polite">In attesa che l'host lanci un cibo…</div>
+
+          <!-- Host controls -->
+          <div class="controls" id="hostControls" style="margin-top:14px;">
+            <button id="newFoodBtn" class="btn">Nuovo cibo casuale</button>
+            <button id="revealBtn" class="btn">Mostra risultati</button>
+            <button id="resetRoomBtn" class="btn">Reset stanza</button>
+          </div>
+
+          <!-- Player answers -->
+          <div class="controls" style="margin-top:10px;">
+            <input id="answerInput" type="number" placeholder="Quanti?" aria-label="Quanti ne mangeresti">
+            <button id="answerBtn" class="btn">Conferma risposta</button>
+          </div>
+          <p class="hint tiny" id="answerStatus"></p>
+
+          <!-- Players list -->
+          <div id="playersList" aria-live="polite"></div>
+
+          <!-- Results -->
+          <div id="resultsBox" aria-live="polite" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase + game logic -->
+  <script type="module">
+    /**********************************************
+     * 1) FIREBASE SETUP
+     **********************************************/
+
+    // Import Firebase SDKs from CDN (modular API)
+    // Docs: https://firebase.google.com/docs/web/alt-setup :contentReference[oaicite:1]{index=1}
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js';
+    import {
+      getDatabase,
+      ref,
+      onValue,
+      get,
+      set,
+      update,
+      remove,
+      serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js'; :contentReference[oaicite:2]{index=2}
+
+    // TODO: replace this with your Firebase config
+    // (from Firebase Console → Project settings → "Your apps" → Web app)
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDdVaafVtIpi4u7W70xMBFQB085cGBW4v4",
+      authDomain: "quantimangeresti.firebaseapp.com",
+      databaseURL: "https://quantimangeresti-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "quantimangeresti",
+      storageBucket: "quantimangeresti.firebasestorage.app",
+      messagingSenderId: "204484577614",
+      appId: "1:204484577614:web:e8c69e59d9cf518af7361f"
+    };
+
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    /**********************************************
+     * 2) GAME DATA
+     **********************************************/
+
+    const foods = [
+      "pizza", "arancini", "bistecca", "gelato", "donut",
+      "olive", "panino", "sushi", "pasta", "patatine",
+      "tiramisu", "hamburger", "wurstel", "frittata", "banana"
+    ];
+
+    // Local state
+    let roomCode = null;
+    let playerId = null;
+    let playerName = null;
+    let isHost = false;
+    let roomRef = null;
+
+    // Cache last room snapshot so host can read it easily
+    let latestRoomSnapshot = null;
+
+    /**********************************************
+     * 3) DOM ELEMENTS
+     **********************************************/
+
+    const viewLobby   = document.getElementById('view-lobby');
+    const viewGame    = document.getElementById('view-game');
+
+    const nicknameInput = document.getElementById('nicknameInput');
+    const roomCodeInput = document.getElementById('roomCodeInput');
+
+    const createRoomBtn = document.getElementById('createRoomBtn');
+    const joinRoomBtn   = document.getElementById('joinRoomBtn');
+
+    const topbarName = document.getElementById('topbarName');
+    const topbarRoom = document.getElementById('topbarRoom');
+    const hostBadgeWrapper = document.getElementById('hostBadgeWrapper');
+
+    const phaseLabel = document.getElementById('phaseLabel');
+    const foodBox    = document.getElementById('foodBox');
+
+    const hostControls   = document.getElementById('hostControls');
+    const newFoodBtn     = document.getElementById('newFoodBtn');
+    const revealBtn      = document.getElementById('revealBtn');
+    const resetRoomBtn   = document.getElementById('resetRoomBtn');
+
+    const answerInput  = document.getElementById('answerInput');
+    const answerBtn    = document.getElementById('answerBtn');
+    const answerStatus = document.getElementById('answerStatus');
+
+    const playersList  = document.getElementById('playersList');
+    const resultsBox   = document.getElementById('resultsBox');
+
+    /**********************************************
+     * 4) HELPERS
+     **********************************************/
+
+    function showViewLobby() {
+      viewLobby.classList.add('active');
+      viewGame.classList.remove('active');
+    }
+
+    function showViewGame() {
+      viewLobby.classList.remove('active');
+      viewGame.classList.add('active');
+    }
+
+    function randomFood() {
+      return foods[Math.floor(Math.random() * foods.length)];
+    }
+
+    function generateRoomCode() {
+      // 4 letters, feels nice for voice
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 4; i++){
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    function getOrCreatePlayerId() {
+      const key = 'qn_party_player_id';
+      let pid = localStorage.getItem(key);
+      if (!pid) {
+        pid = 'p_' + Math.random().toString(36).substring(2,10);
+        localStorage.setItem(key, pid);
+      }
+      return pid;
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, function(m){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+      });
+    }
+
+    /**********************************************
+     * 5) LOBBY: CREATE / JOIN
+     **********************************************/
+
+    createRoomBtn.addEventListener('click', async () => {
+      const nick = nicknameInput.value.trim();
+      if (!nick) {
+        alert('Scegli un nickname prima.');
+        return;
+      }
+
+      playerId = getOrCreatePlayerId();
+      playerName = nick;
+
+      // Room code: use input if given, otherwise random
+      let code = roomCodeInput.value.trim().toUpperCase();
+      if (!code) code = generateRoomCode();
+      roomCode = code;
+
+      roomRef = ref(db, 'rooms/' + roomCode);
+
+      // Create room with initial structure (host)
+      await set(roomRef, {
+        createdAt: serverTimestamp(),
+        state: 'lobby',
+        currentFood: null,
+        currentRound: 0,
+        hostId: playerId,
+        lastResult: null
+      });
+
+      // Add host as player with score 0
+      const playerRef = ref(db, `rooms/${roomCode}/players/${playerId}`);
+      await set(playerRef, {
+        name: playerName,
+        joinedAt: serverTimestamp(),
+        score: 0
+      });
+
+      isHost = true;
+      attachRoomListener();
+      enterGameUI();
+    });
+
+    joinRoomBtn.addEventListener('click', async () => {
+      const nick = nicknameInput.value.trim();
+      if (!nick) {
+        alert('Scegli un nickname prima.');
+        return;
+      }
+      const codeInput = roomCodeInput.value.trim().toUpperCase();
+      if (!codeInput) {
+        alert('Inserisci il codice stanza.');
+        return;
+      }
+
+      playerId = getOrCreatePlayerId();
+      playerName = nick;
+      roomCode = codeInput;
+      roomRef = ref(db, 'rooms/' + roomCode);
+
+      const snap = await get(roomRef);
+      if (!snap.exists()) {
+        alert('Stanza non trovata. Controlla il codice.');
+        return;
+      }
+      const roomData = snap.val();
+
+      // Join as normal player
+      const playerRef = ref(db, `rooms/${roomCode}/players/${playerId}`);
+      const currentScore = roomData.players && roomData.players[playerId] && roomData.players[playerId].score || 0;
+      await set(playerRef, {
+        name: playerName,
+        joinedAt: serverTimestamp(),
+        score: currentScore
+      });
+
+      isHost = (roomData.hostId === playerId);
+      attachRoomListener();
+      enterGameUI();
+    });
+
+    function enterGameUI() {
+      topbarName.textContent = playerName;
+      topbarRoom.textContent = roomCode;
+      showViewGame();
+    }
+
+    /**********************************************
+     * 6) ROOM LISTENER & UI BINDING
+     **********************************************/
+
+    function attachRoomListener() {
+      if (!roomRef) return;
+
+      onValue(roomRef, (snapshot) => {
+        const data = snapshot.val();
+        latestRoomSnapshot = data;
+
+        if (!data) return;
+
+        // Update host status (host could change if you want, but for now it's fixed)
+        isHost = (data.hostId === playerId);
+
+        // Host badge visibility
+        hostBadgeWrapper.style.display = isHost ? 'inline-flex' : 'none';
+
+        // Update state label, food, etc.
+        updatePhaseUI(data);
+        renderPlayersList(data);
+        renderResults(data);
+      });
+    }
+
+    function updatePhaseUI(room) {
+      const state = room.state || 'lobby';
+
+      if (state === 'lobby') {
+        phaseLabel.textContent = "Lobby – in attesa di iniziare.";
+        foodBox.textContent = "Quando l'host è pronto, inizierà il primo giro.";
+        answerInput.disabled = true;
+        answerBtn.disabled = true;
+        resultsBox.style.display = 'none';
+      } else if (state === 'question') {
+        const cf = room.currentFood || "???";
+        phaseLabel.textContent = `Giro ${room.currentRound || 1} – Quanti ne mangeresti?`;
+        foodBox.textContent = cf;
+        answerInput.disabled = false;
+        resultsBox.style.display = 'none';
+
+        // Check if we already answered this round
+        const myAnswered = room.answers && room.answers[playerId];
+        if (myAnswered) {
+          answerInput.disabled = true;
+          answerBtn.disabled = true;
+          answerStatus.textContent = "Hai già risposto per questo giro.";
+        } else {
+          answerBtn.disabled = false;
+          answerStatus.textContent = "";
+        }
+      } else if (state === 'results') {
+        const cf = room.currentFood || "???";
+        phaseLabel.textContent = `Risultati – giro ${room.currentRound || 1}`;
+        foodBox.textContent = cf;
+        answerInput.disabled = true;
+        answerBtn.disabled = true;
+      }
+
+      // Host-only controls
+      hostControls.style.display = isHost ? 'flex' : 'none';
+
+      if (!isHost) {
+        // Guests cannot click host buttons
+        newFoodBtn.disabled = true;
+        revealBtn.disabled = true;
+        resetRoomBtn.disabled = true;
+      } else {
+        // Host can click, but state-dependent
+        if (room.state === 'question') {
+          newFoodBtn.disabled = false; // allow changing food mid question if needed
+          revealBtn.disabled = false;
+        } else if (room.state === 'lobby') {
+          newFoodBtn.disabled = false;
+          revealBtn.disabled = true;
+        } else if (room.state === 'results') {
+          newFoodBtn.disabled = false;
+          revealBtn.disabled = true;
+        }
+        resetRoomBtn.disabled = false;
+      }
+    }
+
+    function renderPlayersList(room) {
+      const players = room.players || {};
+      const answers = room.answers || {};
+      const lastResult = room.lastResult || null;
+
+      const playerIds = Object.keys(players);
+      if (!playerIds.length) {
+        playersList.innerHTML = '<div class="tiny">Nessun giocatore ancora.</div>';
+        return;
+      }
+
+      const html = playerIds.map(pid => {
+        const p = players[pid];
+        const answered = !!answers[pid];
+        const score = p.score || 0;
+        const isFurthest = lastResult && lastResult.furthestId === pid;
+
+        const statusText = answered ? 'OK' : '…';
+        const statusClass = answered ? 'status-answered' : 'status-pending';
+
+        return `
+          <div class="player-row">
+            <div>
+              <strong>${escapeHtml(p.name || '???')}</strong>
+              ${isFurthest ? ' <span class="tiny result-highlight">(beve!)</span>' : ''}
+            </div>
+            <div class="player-score">
+              <span class="${statusClass}">${statusText}</span>
+              &nbsp;•&nbsp; sorsi: ${score}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      playersList.innerHTML = `
+        <div class="tiny" style="margin-bottom:4px;">Giocatori nella stanza:</div>
+        ${html}
+      `;
+    }
+
+    function renderResults(room) {
+      const state = room.state || 'lobby';
+      const lastResult = room.lastResult;
+      if (state !== 'results' || !lastResult) {
+        resultsBox.style.display = 'none';
+        resultsBox.innerHTML = '';
+        return;
+      }
+
+      const avg = lastResult.average;
+      const furthestName = lastResult.furthestName || 'Qualcuno';
+      const furthestValue = lastResult.furthestValue;
+      const count = lastResult.answersCount || 0;
+
+      resultsBox.style.display = 'block';
+      resultsBox.innerHTML = `
+        <h2>RISULTATO</h2>
+        <p>Avete detto in media <strong>${avg.toFixed(2)}</strong>.</p>
+        <p>
+          <span class="result-highlight">${escapeHtml(furthestName)}</span>
+          è statə il più lontano dalla media (ha detto <strong>${furthestValue}</strong>).
+        </p>
+        <p class="tiny">Risposte considerate: ${count}.</p>
+        <p class="tiny">L'host può lanciare il prossimo cibo con "Nuovo cibo casuale".</p>
+      `;
+    }
+
+    /**********************************************
+     * 7) ANSWERS
+     **********************************************/
+
+    answerBtn.addEventListener('click', async () => {
+      if (!roomRef || !latestRoomSnapshot) return;
+
+      const room = latestRoomSnapshot;
+      if (room.state !== 'question') {
+        alert('Non siamo nella fase di risposta.');
+        return;
+      }
+
+      const raw = answerInput.value.trim();
+      if (raw === '') {
+        alert('Inserisci un numero (0 va bene).');
+        return;
+      }
+      const num = Number(raw);
+      if (!Number.isFinite(num)) {
+        alert('Il valore inserito non è un numero valido.');
+        return;
+      }
+
+      const ansRef = ref(db, `rooms/${roomCode}/answers/${playerId}`);
+      await set(ansRef, {
+        name: playerName,
+        value: num
+      });
+
+      answerInput.disabled = true;
+      answerBtn.disabled = true;
+      answerStatus.textContent = "Risposta inviata! Aspetta i risultati…";
+    });
+
+    /**********************************************
+     * 8) HOST CONTROLS: NEW FOOD / REVEAL / RESET
+     **********************************************/
+
+    newFoodBtn.addEventListener('click', async () => {
+      if (!isHost || !roomRef) return;
+
+      const food = randomFood();
+      const snap = await get(roomRef);
+      if (!snap.exists()) return;
+      const room = snap.val();
+      const nextRound = (room.currentRound || 0) + 1;
+
+      await update(roomRef, {
+        state: 'question',
+        currentFood: food,
+        currentRound: nextRound,
+        lastResult: null,
+        answers: null
+      });
+    });
+
+    revealBtn.addEventListener('click', async () => {
+      if (!isHost || !roomRef) return;
+
+      const snap = await get(roomRef);
+      if (!snap.exists()) return;
+      const room = snap.val();
+
+      if (room.state !== 'question') {
+        alert('Puoi mostrare i risultati solo durante un giro di risposta.');
+        return;
+      }
+
+      const players = room.players || {};
+      const answers = room.answers || {};
+
+      const entries = Object.keys(answers).map(pid => {
+        const a = answers[pid];
+        return {
+          playerId: pid,
+          name: a.name || (players[pid] && players[pid].name) || '???',
+          value: Number(a.value)
+        };
+      }).filter(e => Number.isFinite(e.value));
+
+      if (!entries.length) {
+        alert('Nessuna risposta ancora.');
+        return;
+      }
+
+      // Compute average
+      const sum = entries.reduce((acc,e) => acc + e.value, 0);
+      const avg = sum / entries.length;
+
+      // Find furthest from average
+      let furthest = entries[0];
+      let maxDiff = Math.abs(entries[0].value - avg);
+      for (let i = 1; i < entries.length; i++){
+        const diff = Math.abs(entries[i].value - avg);
+        if (diff > maxDiff) {
+          maxDiff = diff;
+          furthest = entries[i];
+        }
+      }
+
+      const lastResult = {
+        average: avg,
+        furthestId: furthest.playerId,
+        furthestName: furthest.name,
+        furthestValue: furthest.value,
+        answersCount: entries.length
+      };
+
+      // Update room state + result
+      await update(roomRef, {
+        state: 'results',
+        lastResult
+      });
+
+      // Update score of furthest player (+1 sip)
+      const playerPath = `rooms/${roomCode}/players/${furthest.playerId}`;
+      const furthestPlayerSnap = await get(ref(db, playerPath));
+      if (furthestPlayerSnap.exists()) {
+        const pData = furthestPlayerSnap.val();
+        const newScore = (pData.score || 0) + 1;
+        await update(ref(db, playerPath), { score: newScore });
+      }
+    });
+
+    resetRoomBtn.addEventListener('click', async () => {
+      if (!isHost || !roomRef) return;
+      const ok = confirm('Resetti la stanza? Azzererà i giri e i risultati, ma terrà i giocatori.');
+      if (!ok) return;
+
+      const snap = await get(roomRef);
+      if (!snap.exists()) return;
+      const room = snap.val();
+      const players = room.players || {};
+
+      // Reset scores to 0
+      const updates = {
+        state: 'lobby',
+        currentFood: null,
+        currentRound: 0,
+        lastResult: null,
+        answers: null
+      };
+
+      Object.keys(players).forEach(pid => {
+        updates[`players/${pid}/score`] = 0;
+      });
+
+      await update(roomRef, updates);
+    });
+
+    /**********************************************
+     * 9) INITIAL STATE
+     **********************************************/
+
+    showViewLobby();
+  </script>
+</body>
+</html>
