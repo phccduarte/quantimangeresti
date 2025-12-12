@@ -1001,22 +1001,42 @@
      **********************************************/
 
     newFoodBtn.addEventListener('click', async () => {
-      if (!isHost || !roomRef) return;
+      console.log("[DEBUG] click Nuovo cibo", { isHost, roomRef: !!roomRef, roomCode });
+
+      if (!roomRef) {
+        alert("Nessuna stanza attiva (roomRef mancante).");
+        return;
+      }
+      if (!isHost) {
+        alert("Solo l'host può lanciare un nuovo cibo.");
+        return;
+      }
 
       try {
         const food = randomFood();
+        console.log("[DEBUG] cibo scelto:", food);
+
         const snap = await get(roomRef);
-        if (!snap.exists()) return;
+        console.log("[DEBUG] room snapshot exists?", snap.exists());
+
+        if (!snap.exists()) {
+          alert("La stanza non esiste più nel database.");
+          return;
+        }
+
         const room = snap.val();
         const nextRound = (room.currentRound || 0) + 1;
+        console.log("[DEBUG] nextRound:", nextRound);
 
         await update(roomRef, {
           state: 'question',
           currentFood: food,
           currentRound: nextRound,
           lastResult: null,
-          answers: null
+          answers: null,
         });
+
+        console.log("[DEBUG] update stanza OK");
       } catch (err) {
         console.error("Errore Nuovo cibo:", err);
         alert("Errore lanciando il nuovo cibo: " + (err.message || err));
