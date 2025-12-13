@@ -307,9 +307,8 @@
         <!-- LOBBY VIEW -->
         <div id="view-lobby" class="view active">
           <p class="lead">
-            Gioco alcolico multiplayer 🥤<br>
             1) Scegli un nickname<br>
-            2) Crea una stanza o entra con un codice<br>
+            2) Entra con il codice della stanza<br>
             3) Chi è più lontano dalla media… beve!
           </p>
 
@@ -889,6 +888,7 @@
     }
 
     function renderPlayersList(room) {
+      const state = room.state || 'lobby';
       const players = room.players || {};
       const answers = room.answers || {};
       const lastResult = room.lastResult || null;
@@ -901,12 +901,31 @@
 
       const html = playerIds.map(pid => {
         const p = players[pid];
-        const answered = !!answers[pid];
+        const answerObj = answers[pid];
+        const answered = !!answerObj;
         const score = p.score || 0;
         const isFurthest = lastResult && lastResult.furthestId === pid;
 
-        const statusText = answered ? 'OK' : '…';
-        const statusClass = answered ? 'status-answered' : 'status-pending';
+        // Try to get the numeric answer value
+        const answerValue = answerObj ? Number(answerObj.value) : null;
+        const hasAnswerValue = Number.isFinite(answerValue);
+
+        let statusText;
+        let statusClass;
+
+        if (answered) {
+          statusClass = 'status-answered';
+
+          // 🔥 During RESULTS, show the actual number instead of "OK"
+          if (state === 'results' && hasAnswerValue) {
+            statusText = answerValue;
+          } else {
+            statusText = 'OK';
+          }
+        } else {
+          statusClass = 'status-pending';
+          statusText = '…';
+        }
 
         return `
           <div class="player-row">
@@ -923,7 +942,10 @@
       }).join('');
 
       playersList.innerHTML = `
-        <div class="tiny" style="margin-bottom:4px;">Giocatori nella stanza:</div>
+        <div class="tiny" style="margin-bottom:4px;">
+          Giocatori nella stanza:
+          ${state === 'results' ? ' (numero = risposta di questo giro)' : ''}
+        </div>
         ${html}
       `;
     }
